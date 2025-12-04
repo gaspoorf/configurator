@@ -49,7 +49,7 @@ const cameraLookAt = [
     new THREE.Vector3(-1, 0, 0),
 ];
 
-// --- CAMERA ---
+// CAMERA
 function CameraController({ index }: { index: number }) {
     const { camera } = useThree();
     const currentLookAt = useRef(new THREE.Vector3());
@@ -67,7 +67,7 @@ function CameraController({ index }: { index: number }) {
     return null
 }
 
-// --- FPS COUNTER ---
+// FPS 
 function FPSCounter({ onFpsUpdate }: { onFpsUpdate: (fps: number) => void }) {
     const frameCount = useRef(0);
     const lastTime = useRef(Date.now());
@@ -83,7 +83,7 @@ function FPSCounter({ onFpsUpdate }: { onFpsUpdate: (fps: number) => void }) {
     return null;
 }
 
-// --- MODEL COMPONENT ---
+
 type ModelProps = {
     goToStep: (stepIndex: number) => void;
     plane: number;
@@ -116,7 +116,7 @@ function ModelComponent({
     energy, onEnergyChange, 
     clothes, onClothesChange, 
     isModelTurned,
-    onReveal // 🆕
+    onReveal 
 }: ModelProps) {
     const asset = Asset.fromModule(require("../../assets/3d/configurator-color.glb"));
     if (!asset.localUri) asset.downloadAsync();
@@ -372,17 +372,17 @@ function ModelComponent({
         if (dragging1.current) {
             dragging1.current = false;
             onPlaneChange(lastValue1.current);
-            onReveal(); // 🆕 REVEAL à la fin du drag
+            onReveal(); //REVEAL 
         }
         if (dragging5.current) {
             dragging5.current = false;
             onProductsChange(lastValue5.current);
-            onReveal(); // 🆕
+            onReveal(); 
         }
         if (dragging8.current) {
             dragging8.current = false;
             onClothesChange(lastValue8.current);
-            onReveal(); // 🆕
+            onReveal(); 
         }
     };
 
@@ -400,7 +400,6 @@ function ModelComponent({
 
 const Model = React.memo(ModelComponent);
 
-// --- APPLICATION PRINCIPALE ---
 const SOCKET_URL = "http://10.137.97.170:4000";
 
 export default function App({ userName }: Props) {
@@ -421,9 +420,10 @@ export default function App({ userName }: Props) {
     const [camIndex, setCamIndex] = useState(0);
 
     const socketRef = useRef<Socket | null>(null);
-    const roomId = `room-${userName}`;
+    const roomId = `123`;
 
-    // Socket.io Setup
+   
+    // Socket.io 
     useEffect(() => {
         const socket = io(SOCKET_URL, {
             autoConnect: true,
@@ -435,7 +435,6 @@ export default function App({ userName }: Props) {
             console.log("✅ Socket.io connecté");
             setIsConnected(true);
             
-            // 🆕 Rejoindre la room
             socket.emit("join-room", roomId);
             console.log(`📍 Rejoint la room: ${roomId}`);
         });
@@ -445,7 +444,7 @@ export default function App({ userName }: Props) {
             setIsConnected(false);
         });
 
-        // 🆕 Écouter les mises à jour du serveur (optionnel)
+    
         socket.on("update-client", (data) => {
             console.log("📥 Mise à jour reçue:", data);
         });
@@ -474,10 +473,10 @@ export default function App({ userName }: Props) {
             }
         });
 
-        console.log("🔔 REVEAL envoyé");
+        console.log("REVEAL envoyé");
     }, [isConnected, roomId, plane, transport, promptIA, meat, products, phone, energy, clothes]);
 
-    // envoyer VALIDATE_FORM (à la fin)
+    // envoyer VALIDATE_FORM
     const sendValidateForm = useCallback(() => {
         if (!socketRef.current || !isConnected) return;
 
@@ -496,7 +495,7 @@ export default function App({ userName }: Props) {
             }
         });
 
-        console.log("✅ VALIDATE_FORM envoyé");
+        console.log("VALIDATE_FORM envoyé");
     }, [isConnected, roomId, plane, transport, promptIA, meat, products, phone, energy, clothes]);
 
     // Handlers
