@@ -484,7 +484,7 @@ export default function App({ userName }: Props) {
 
     // WebSocket Setup
     useEffect(() => {
-        const socket = new WebSocket("ws://172.20.10.4:3001");
+        // const socket = new WebSocket("ws://172.20.10.4:3001");
         setWs(socket);
         socket.onopen = () => {
             console.log("WebSocket connected");

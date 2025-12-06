@@ -9,6 +9,7 @@ import { Asset } from 'expo-asset';
 
 type Props = {
     userName: string;
+    roomId: string;
 };
 
 const { width, height } = Dimensions.get("window");
@@ -90,7 +91,7 @@ type ModelProps = {
     onPlaneChange: (value: number) => void;
     transport: any;
     onTransportChange: (value: any) => void;
-    promptIA: any;
+    promptIA: number;
     onPromptIAChange: () => void;
     meat: boolean;
     onMeatChange: () => void;
@@ -98,12 +99,14 @@ type ModelProps = {
     onProductsChange: (value: number) => void;
     phone: any;
     onPhoneChange: (value: any) => void;
-    energy: any;
+    energy: number;
     onEnergyChange: () => void;
     clothes: number;
     onClothesChange: (value: number) => void;
     isModelTurned: boolean;
-    onReveal: () => void; // REVEAL
+    onReveal: (overrides?: any) => void; // REVEAL
+    onCameraMovement: (type: string, value: number) => void; //movements
+    onCameraZoom: (type: string, value: number) => void; //zooom
 };
 
 function ModelComponent({ 
@@ -116,7 +119,9 @@ function ModelComponent({
     energy, onEnergyChange, 
     clothes, onClothesChange, 
     isModelTurned,
-    onReveal 
+    onReveal,
+    onCameraMovement,
+    onCameraZoom
 }: ModelProps) {
     const asset = Asset.fromModule(require("../../assets/3d/configurator-color.glb"));
     if (!asset.localUri) asset.downloadAsync();
@@ -126,6 +131,8 @@ function ModelComponent({
     const dragging1 = useRef(false);
     const dragging5 = useRef(false);
     const dragging8 = useRef(false);
+    const draggingMovements = useRef(false);
+    const draggingZoom = useRef(false);
 
     const cursorRef = useRef<THREE.Object3D | null>(null);
     const planeRef = useRef<THREE.Plane | null>(null);
@@ -133,6 +140,10 @@ function ModelComponent({
     const plane5Ref = useRef<THREE.Plane | null>(null);
     const cursor8Ref = useRef<THREE.Object3D | null>(null);
     const plane8Ref = useRef<THREE.Plane | null>(null);
+    const cursorMovementsRef = useRef<THREE.Object3D | null>(null);
+    const planeMovementsRef = useRef<THREE.Plane | null>(null);
+    const cursorZoomRef = useRef<THREE.Object3D | null>(null);
+    const planeZoomRef = useRef<THREE.Plane | null>(null);
 
     const intersectionPoint = useRef(new THREE.Vector3());
     const localPoint = useRef(new THREE.Vector3());
@@ -143,6 +154,7 @@ function ModelComponent({
     const lastValue1 = useRef(plane);
     const lastValue5 = useRef(products);
     const lastValue8 = useRef(clothes);
+
 
     useEffect(() => { lastValue1.current = plane; }, [plane]);
     useEffect(() => { lastValue5.current = products; }, [products]);
@@ -195,6 +207,28 @@ function ModelComponent({
                     button7Refs.current[child.name] = child;
                     child.userData.initialRotate = child.rotation.y;
                 }
+
+
+
+
+                /// mouvements de camera
+                else if (child.name === "movements") {
+                    console.log("found movements");
+                    cursorMovementsRef.current = child;
+                    child.getWorldPosition(worldPos);
+                    planeMovementsRef.current = new THREE.Plane(new THREE.Vector3(0, 0, 1), -worldPos.z);
+                
+                    child.userData.initialX = child.position.x;
+                    child.userData.initialY = child.position.y;
+                }
+
+                /// mouvements de camera
+                else if (child.name === "zoom") {
+                    console.log("found movements");
+                    cursorZoomRef.current = child;
+                    child.getWorldPosition(worldPos);
+                    planeZoomRef.current = new THREE.Plane(new THREE.Vector3(0, 0, 1), -worldPos.z);
+                }
             }
         });
     }, [gltf]);
@@ -213,8 +247,8 @@ function ModelComponent({
 
         Object.entries(button3Refs.current).forEach(([name, ref]) => {
             if (!ref) return;
-            const index = promptIA === "low" ? 0 : promptIA === "mid" ? 1 : 2;
-            const targetY = ref.userData.initialRotate - [0, 1.7, 3.4][index];
+            const index = promptIA === 0 ? 0 : promptIA === 33 ? 1 : promptIA === 66 ? 2 : 3;
+            const targetY = ref.userData.initialRotate - [0, 1.7, 3.4, 5][index];
             ref.rotation.y = THREE.MathUtils.lerp(ref.rotation.y, targetY, 0.05);
         });
 
@@ -232,10 +266,21 @@ function ModelComponent({
 
         Object.entries(button7Refs.current).forEach(([name, ref]) => {
             if (!ref) return;
-            const index = energy === "low" ? 0 : energy === "mid" ? 1 : 2;
-            const targetY = ref.userData.initialRotate - [0, 1.7, 3.4][index];
+            const index = energy === 0 ? 0 : energy === 33 ? 1 : energy === 66 ? 2 : 3;
+            const targetY = ref.userData.initialRotate - [0, 1.7, 3.4, 5][index];
             ref.rotation.y = THREE.MathUtils.lerp(ref.rotation.y, targetY, 0.05);
         });
+
+
+        //retour joystick
+        if (!draggingMovements.current && cursorMovementsRef.current) {
+            const cursor = cursorMovementsRef.current;
+            const targetX = cursor.userData.initialX ?? 0;
+            const targetY = cursor.userData.initialY ?? 0;
+            
+            cursor.position.x = THREE.MathUtils.lerp(cursor.position.x, targetX, 0.15);
+            cursor.position.y = THREE.MathUtils.lerp(cursor.position.y, targetY, 0.15);
+        }
     });
 
     const handlePointerDown = useCallback((e: ThreeEvent<PointerEvent>) => {
@@ -272,31 +317,55 @@ function ModelComponent({
         } 
         else if (["2a", "2b", "2c"].includes(name)) {
             pressed2Button.current = name;
-            const mapping: any = { "2a": "voiture", "2b": "bus", "2c": "train" };
-            onTransportChange(mapping[name]);
+            const mapping: any = { "2a": "100", "2b": "50", "2c": "0" }; //voiture, bus, pied
+            const newTransport = mapping[name];
+            onTransportChange({ transport: newTransport });
             onReveal(); // Envoyer REVEAL
+            console.log(newTransport)
         } else if (name === "3") {
             pressed3Button.current = name;
+            const newPromptIA = promptIA === 0 ? 33 : promptIA === 33 ? 66 : promptIA === 66 ? 100 : 0;
             onPromptIAChange();
-            onReveal();
+            onReveal({ promptIA: newPromptIA }); 
+            console.log(newPromptIA)
         } else if (name === "4") {
             pressed4Button.current = name;
+            const newMeat = !meat;
             onMeatChange();
-            onReveal(); 
+            onReveal({ meat: newMeat });
+            console.log(newMeat)
         } else if (["6a", "6b"].includes(name)) {
             pressed6Button.current = name;
-            const mapping: any = { "6a": "IPhone 17", "6b": "Nokia 3310" };
-            onPhoneChange(mapping[name]);
-            onReveal();
+            const mapping: any = { "6a": 100, "6b": 0 }; // Iphone 17 ou Nokia
+            const newPhone = mapping[name];
+            onPhoneChange(newPhone);
+            onReveal({ phone: newPhone });
+            console.log(newPhone)
         } else if (name === "7") {
             pressed7Button.current = name;
+            const newEnergy = energy === 0 ? 33 : energy === 33 ? 66 : energy === 66 ? 100 : 0;
             onEnergyChange();
-            onReveal(); 
+            onReveal({ energy: newEnergy });
+            console.log(newEnergy)
         }
-    }, [onTransportChange, onPromptIAChange, onMeatChange, onPhoneChange, onEnergyChange, onReveal]);
+
+
+        // movements camera
+        else if (name === "movements" && cursorMovementsRef.current && planeMovementsRef.current) {
+            draggingMovements.current = true;
+            setupDrag(cursorMovementsRef.current, planeMovementsRef.current);
+        }
+
+        // movements camera
+        else if (name === "zoom" && cursorZoomRef.current && planeZoomRef.current) {
+            draggingZoom.current = true;
+            setupDrag(cursorZoomRef.current, planeZoomRef.current);
+        }
+
+    }, [onTransportChange, onPromptIAChange, onMeatChange, onPhoneChange, onEnergyChange, onReveal, onCameraMovement, onCameraZoom]);
 
     useFrame((state) => {
-        if (!dragging1.current && !dragging5.current && !dragging8.current) return;
+        if (!dragging1.current && !dragging5.current && !dragging8.current && !draggingMovements.current && !draggingZoom.current) return;
 
         const now = Date.now();
         const THROTTLE_DELAY = 50; 
@@ -323,7 +392,7 @@ function ModelComponent({
                 cursorRef.current.position.x = newX;
 
                 if (now - lastCallTime.current > THROTTLE_DELAY) {
-                    const val = THREE.MathUtils.mapLinear(newX, min, max, 0, 10);
+                    const val = THREE.MathUtils.mapLinear(newX, min, max, 0, 100);
                     onPlaneChange(val);
                     lastValue1.current = val;
                     lastCallTime.current = now;
@@ -340,7 +409,7 @@ function ModelComponent({
                 cursor5Ref.current.position.y = newY;
 
                 if (now - lastCallTime.current > THROTTLE_DELAY) {
-                    const val = THREE.MathUtils.mapLinear(newY, min, max, 0, 5);
+                    const val = THREE.MathUtils.mapLinear(newY, min, max, 0, 100);
                     onProductsChange(val);
                     lastValue5.current = val;
                     lastCallTime.current = now;
@@ -357,13 +426,82 @@ function ModelComponent({
                 cursor8Ref.current.position.x = newX;
  
                 if (now - lastCallTime.current > THROTTLE_DELAY) {
-                    const val = THREE.MathUtils.mapLinear(newX, min, max, 0, 4);
+                    const val = THREE.MathUtils.mapLinear(newX, min, max, 0, 100);
                     onClothesChange(val);
                     lastValue8.current = val;
                     lastCallTime.current = now;
                 }
             }
         }
+
+
+
+        if (draggingMovements.current && cursorMovementsRef.current && planeMovementsRef.current) {
+            const pos = getLocalPosition(cursorMovementsRef.current, planeMovementsRef.current);
+            if (pos) {
+                const minX = -2, maxX = 0;
+                const minY = -3.5, maxY = -1.5;
+                let newX = Math.max(minX, Math.min(maxX, pos.x - dragOffset.current.x));
+                let newY = Math.max(minY, Math.min(maxY, pos.y - dragOffset.current.y));
+
+                cursorMovementsRef.current.position.x = newX;
+                cursorMovementsRef.current.position.y = newY;
+
+
+                if (now - lastCallTime.current > THROTTLE_DELAY) {
+                    const valX = THREE.MathUtils.mapLinear(newX, minX, maxX, 0, 10);
+                    const valY = THREE.MathUtils.mapLinear(newY, minY, maxY, 0, 10);
+                    
+                    // LEFT/RIGHT
+                    if (valX < 4.5) {
+                        const leftValue = THREE.MathUtils.mapLinear(valX, 0, 4.5, 10, 0);
+                        onCameraMovement("CAMERA_RIGHT", leftValue);
+                        console.log("LEFT", leftValue);
+                    } else if (valX > 5.5) {
+                        const rightValue = THREE.MathUtils.mapLinear(valX, 5.5, 10, 0, 10);
+                        onCameraMovement("CAMERA_LEFT", rightValue);
+                        console.log("RIGHT", rightValue);
+                    }
+                
+                    // FORWARD/BACK
+                    if (valY < 4.5) {
+                        const backValue = THREE.MathUtils.mapLinear(valY, 0, 4.5, 10, 0);
+                        onCameraMovement("CAMERA_BACK", backValue);
+                        console.log("BACK", backValue);
+                    } else if (valY > 5.5) {
+                        const forwardValue = THREE.MathUtils.mapLinear(valY, 5.5, 10, 0, 10);
+                        onCameraMovement("CAMERA_FORWARD", forwardValue);
+                        console.log("FORWARD", forwardValue);
+                    }
+
+                    lastCallTime.current = now;
+                }
+
+
+            }
+        }
+
+        if (draggingZoom.current && cursorZoomRef.current && planeZoomRef.current) {
+            const pos = getLocalPosition(cursorZoomRef.current, planeZoomRef.current);
+            if (pos) {
+                const min = -5, max = -0.3;
+                let newY = Math.max(min, Math.min(max, pos.y - dragOffset.current.y));
+
+                cursorZoomRef.current.position.y = newY;
+                
+                if (now - lastCallTime.current > THROTTLE_DELAY) {
+                    // 🆕 Valeur entre -10 et 10
+                    const zoomValue = THREE.MathUtils.mapLinear(newY, min, max, -10, 10);
+                    onCameraZoom("CAMERA_ZOOM", zoomValue);
+                    console.log("ZOOM", zoomValue);
+                    
+                    lastCallTime.current = now;
+                }
+            }
+        }
+
+
+
     });
 
     const handlePointerUp = (e: ThreeEvent<PointerEvent>) => {
@@ -377,12 +515,24 @@ function ModelComponent({
         if (dragging5.current) {
             dragging5.current = false;
             onProductsChange(lastValue5.current);
+            console.log(products);
             onReveal(); 
         }
         if (dragging8.current) {
             dragging8.current = false;
             onClothesChange(lastValue8.current);
+            console.log(clothes);
             onReveal(); 
+        }
+        if (draggingMovements.current) {
+            draggingMovements.current = false;
+            onCameraMovement("CAMERA_LEFT", 0);
+            onCameraMovement("CAMERA_RIGHT", 0);
+            onCameraMovement("CAMERA_FORWARD", 0);
+            onCameraMovement("CAMERA_BACK", 0);
+        }
+        if (draggingZoom.current) {
+            draggingZoom.current = false;
         }
     };
 
@@ -400,17 +550,17 @@ function ModelComponent({
 
 const Model = React.memo(ModelComponent);
 
-const SOCKET_URL = "http://10.137.97.170:4000";
+const SOCKET_URL = "http://172.20.10.14:4000/";
 
-export default function App({ userName }: Props) {
+export default function App({ userName, roomId }: Props) {
     const [isConnected, setIsConnected] = useState(false);
     const [plane, setPlane] = useState(10);
-    const [transport, setTransport] = useState<"voiture" | "bus" | "train" | null>(null);
-    const [promptIA, setPromptIA] = useState<"low" | "mid" | "high">("low");
-    const [energy, setEnergy] = useState<"low" | "mid" | "high">("low");
+    const [transport, setTransport] = useState<"100" | "50" | "0" | 0>(0); // voiture:100 bus:50 pied:0
+    const [promptIA, setPromptIA] = useState<0 | 33 | 66 | 100>(0);
+    const [energy, setEnergy] = useState<0 | 33 | 66 | 100>(0);
     const [meat, setMeat] = useState(false);
     const [products, setProducts] = useState(5);
-    const [phone, setPhone] = useState<"IPhone 17" | "Nokia 3310"| null>(null);
+    const [phone, setPhone] = useState<"IPhone 17" | "Nokia 3310"| 0>(0);
     const [clothes, setClothes] = useState(5);
 
     const [fps, setFps] = useState(0);
@@ -420,7 +570,8 @@ export default function App({ userName }: Props) {
     const [camIndex, setCamIndex] = useState(0);
 
     const socketRef = useRef<Socket | null>(null);
-    const roomId = `123`;
+
+    console.log("Room ID:", roomId);
 
    
     // Socket.io 
@@ -452,30 +603,26 @@ export default function App({ userName }: Props) {
         return () => {
             socket.disconnect();
         };
-    }, [userName]);
+    }, [userName, roomId]);
 
     // envoyer REVEAL
-    const sendReveal = useCallback(() => {
+    const sendReveal = useCallback((overrides = {}) => {
         if (!socketRef.current || !isConnected) return;
 
+        const payload = {
+            type: "REVEAL"
+        };
+        
         socketRef.current.emit("action-client", {
             roomId,
-            payload: {
-                type: "REVEAL",
-                plane: Math.round(plane),
-                transport,
-                promptIA,
-                meat,
-                products: Math.round(products),
-                phone,
-                energy,
-                clothes: Math.round(clothes),
-            }
+            payload
         });
 
-        console.log("REVEAL envoyé");
+        console.log("REVEAL envoyé", payload);
     }, [isConnected, roomId, plane, transport, promptIA, meat, products, phone, energy, clothes]);
 
+    
+    
     // envoyer VALIDATE_FORM
     const sendValidateForm = useCallback(() => {
         if (!socketRef.current || !isConnected) return;
@@ -484,19 +631,58 @@ export default function App({ userName }: Props) {
             roomId,
             payload: {
                 type: "VALIDATE_FORM",
-                plane: Math.round(plane),
-                transport,
-                promptIA,
-                meat,
-                products: Math.round(products),
-                phone,
-                energy,
-                clothes: Math.round(clothes),
+                data: {
+                    plane: Math.round(plane),
+                    transport,
+                    promptIA,
+                    meat,
+                    products: Math.round(products),
+                    phone,
+                    energy,
+                    clothes: Math.round(clothes),
+                },
+                
             }
         });
 
         console.log("VALIDATE_FORM envoyé");
     }, [isConnected, roomId, plane, transport, promptIA, meat, products, phone, energy, clothes]);
+
+
+    // envoyer camera movements
+    const sendCameraMovement = useCallback((type: string, value: number) => {
+        if (!socketRef.current || !isConnected) return;
+
+        socketRef.current.emit("action-client", {
+            roomId,
+            payload: {
+                type,
+                data:{
+                    strength: value,
+                }
+            }
+        });
+
+        console.log(`${type} envoyé:`, value);
+    }, [isConnected, roomId]);
+
+    // envoyer camera movements
+    const sendCameraZoom = useCallback((type: string, value: number) => {
+        if (!socketRef.current || !isConnected) return;
+
+        socketRef.current.emit("action-client", {
+            roomId,
+            payload: {
+                type,
+                data:{
+                    value: value,
+                }
+            }
+        });
+
+        console.log(`${type} envoyé:`, value);
+    }, [isConnected, roomId]);
+
 
     // Handlers
     const handlePlaneChange = useCallback((v: number) => {
@@ -508,7 +694,7 @@ export default function App({ userName }: Props) {
     }, []);
 
     const togglePromptIA = useCallback(() => {
-        setPromptIA(prev => prev === "high" ? "low" : prev === "low" ? "mid" : "high");
+        setPromptIA(prev => prev === 0 ? 33 : prev === 33 ? 66 : prev === 66 ? 100 : 0);
     }, []);
 
     const toggleMeat = useCallback(() => {
@@ -524,8 +710,8 @@ export default function App({ userName }: Props) {
     }, []);
 
     const toggleEnergy = useCallback(() => {
-        setEnergy(prev => prev === "high" ? "low" : prev === "low" ? "mid" : "high");
-    }, []);
+        setEnergy(prev => prev === 0 ? 33 : prev === 33 ? 66 : prev === 66 ? 100 : 0);
+    }, [])
 
     const handleClothesChange = useCallback((v: number) => {
         setClothes(v);
@@ -547,13 +733,12 @@ export default function App({ userName }: Props) {
             case 3: return `${userName} mange beaucoup de viande ?`;
             case 4: return `${userName} mange local ? Ou ses produits ont fait 3x le tour du globe avant d'arriver dans son assiette ?`;
             case 5: return `${userName} s'équipe d'un IPhone 17, ou se contente d'un Nokia 3310 ?`;
-            case 6: return `Consommation énergie`;
+            case 6: return `À quelle température ${userName} chauffe son logement ?`;
             case 7: return `À quelle Fréquence ${userName} achète des vêtements ? ${Math.round(clothes)}`;
             default: return "Configuration terminée";
         }
     };
 
-    //Gestion du bouton "Terminer"
     const handleFinish = () => {
         nextCam();
         nextStep();
@@ -598,6 +783,8 @@ export default function App({ userName }: Props) {
                             clothes={clothes} onClothesChange={handleClothesChange} 
                             isModelTurned={isModelTurned}
                             onReveal={sendReveal} // passer le callback REVEAL
+                            onCameraMovement={sendCameraMovement}
+                            onCameraZoom={sendCameraZoom}
                         />
                     </Suspense>
                     <CameraController index={camIndex} />

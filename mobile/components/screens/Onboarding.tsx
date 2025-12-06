@@ -11,7 +11,6 @@ const ONBOARDING_STEPS = [
     { title: "Étape 3", description: "Ta mission :                                Créer un écosystème capable de tenir tête aux changements climatiques."},
     { title: "Étape 4", description: "Tu vas devoir faire des choix. Des vrais ! Des décisions qui vont tout changer pour ta planète."},
     { title: "Étape 5", description: "Pas besoin d’être un.e écolo parfait.e. Juste… essaie de ne pas tout détruire ok ? Prêt.e ? Allez, on commence !"},
-
 ];
 
 export default function Onboarding({ onComplete }: Props) {
@@ -21,9 +20,9 @@ export default function Onboarding({ onComplete }: Props) {
 
     const handleNext = () => {
         if (step < ONBOARDING_STEPS.length - 1) {
-        setStep(step + 1);
+            setStep(step + 1);
         } else {
-        onComplete(userName);
+            onComplete(userName);
         }
     };
 
@@ -90,7 +89,7 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#a01515',
         marginBottom: 20,
-        textTransform: 'uppercase',
+        // textTransform: 'uppercase',
         letterSpacing: 1,
     },
     title: {
@@ -101,8 +100,6 @@ const styles = StyleSheet.create({
     },
     description: {
         textAlign: 'center',
-        letterSpacing: '-0.28',
-        lineHeight: '26.4',
         fontSize: 24,
         fontWeight: 700,
         color: '#000000',
@@ -150,7 +147,7 @@ const styles = StyleSheet.create({
         fontWeight: 700,
         color: '#000000',
         textAlign: "center",
-        textTransform: "uppercase",
+        // textTransform: "uppercase",
     },
    
     image: {

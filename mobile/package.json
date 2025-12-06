@@ -19,6 +19,7 @@
     "@react-three/drei": "^10.7.0",
     "@react-three/fiber": "^9.4.0",
     "expo": "~54.0.23",
+    "expo-camera": "~17.0.9",
     "expo-constants": "~18.0.10",
     "expo-font": "~14.0.9",
     "expo-gl": "~16.0.7",

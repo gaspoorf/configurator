@@ -144,7 +144,7 @@ export default function App() {
 
     useEffect(() => {
         // const socket = new WebSocket("ws://172.20.10.4:3001");
-        const socket = new WebSocket("ws://172.18.144.1:3001");
+        // const socket = new WebSocket("ws://172.18.144.1:3001");
         
         setWs(socket);
 
