@@ -1,6 +1,6 @@
 import { useCameraPermissions, CameraView } from "expo-camera";
 import { useEffect, useState } from "react";
-import { SafeAreaView, StyleSheet, Text, Pressable, StatusBar, Platform } from "react-native";
+import { View, StyleSheet, Text, Image, Pressable, StatusBar, Platform } from "react-native";
 
 type Props = {
     onComplete: (roomId: string) => void;
@@ -28,7 +28,7 @@ export default function QRScan({ onComplete }: Props) {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       {Platform.OS === "android" ? <StatusBar hidden /> : null}
 
       {!isGranted ? (
@@ -40,6 +40,13 @@ export default function QRScan({ onComplete }: Props) {
         </>
       ) : (
         <>
+
+        <Image
+              source={require("../../assets/icons/logo.png")}
+              style={styles.image}
+          />
+
+
           <CameraView
             style={styles.camera}
             facing="back"
@@ -48,18 +55,18 @@ export default function QRScan({ onComplete }: Props) {
           />
 
           <Text style={styles.info}>
-            {scannedData ? `QR détecté : ${scannedData}` : "Scanne un QR Code"}
+            {scannedData ? `QR détecté : ${scannedData}` : "Rends-toi sur 2100.fr et scan le QR Code"}
           </Text>
         </>
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#000",
+    backgroundColor: "#ffffff",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -71,17 +78,29 @@ const styles = StyleSheet.create({
   },
   info: {
     marginTop: 20,
-    color: "#fff",
-    fontSize: 16,
+    color: "#000000",
+    fontSize: 24,
+    fontWeight: "bold",
+    textAlign: "center",
+    maxWidth: 300,
   },
   btn: {
-    backgroundColor: "#0BCD4C",
-    padding: 12,
-    borderRadius: 8,
+    backgroundColor: "#2676FF",
+    padding: 20,
+    paddingHorizontal: 24,
+    marginTop: 20,
+    borderRadius: 100,
   },
   btnText: {
     color: "#000",
     fontWeight: "bold",
     fontSize: 16,
+  },
+  image: {
+    width: '70%',
+    height: 120,
+    marginBottom: 30,
+    resizeMode: 'contain',
+    position: 'relative',
   },
 });

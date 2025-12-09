@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "mobile",
-    "slug": "mobile",
+    "name": "2100",
+    "slug": "2100",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "mobile",
+    "icon": "./assets/icons/logo.png",
+    "scheme": "2100",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -26,7 +26,68 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "expo-router",
+      [
+        "expo-video",
+        {
+          "supportsBackgroundPlayback": true,
+          "supportsPictureInPicture": true
+        }
+      ],
+      [
+        "expo-font",
+        {
+          "android": {
+            "fonts": [
+              {
+                "fontFamily": "MillingTrial",
+                "fontDefinitions": [
+                  {
+                    "path": "./assets/fonts/MillingTrial2.otf",
+                    "weight": 700
+                  },
+                  {
+                    "path": "./assets/fonts/MillingTrial15.otf",
+                    "weight": 400
+                  }
+                ]
+              },
+              {
+                "fontFamily": "OpenRunde",
+                "fontDefinitions": [
+                  {
+                    "path": "./assets/fonts/OpenRunde-Bold.otf",
+                    "weight": 700
+                  },
+                  {
+                    "path": "./assets/fonts/OpenRunde-Medium.otf",
+                    "weight": 600
+                  },
+                  {
+                    "path": "./assets/fonts/OpenRunde-Semibold.otf",
+                    "weight": 500
+                  },
+                  {
+                    "path": "./assets/fonts/OpenRunde-Regular.otf",
+                    "weight": 400
+                  }
+                ]
+              }
+            ]
+          },
+
+          "ios": {
+            "fonts": [
+              "./assets/fonts/MillingTrial2.otf",
+              "./assets/fonts/MillingTrial15.otf",
+              "./assets/fonts/OpenRunde-Bold.otf",
+              "./assets/fonts/OpenRunde-Medium.otf",
+              "./assets/fonts/OpenRunde-Semibold.otf",
+              "./assets/fonts/OpenRunde-Regular.otf"
+            ]
+          }
+        }
+      ],
+
       [
         "expo-splash-screen",
         {
@@ -38,7 +99,9 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      "expo-asset",
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true,

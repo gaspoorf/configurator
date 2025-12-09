@@ -10,6 +10,7 @@ config.resolver.sourceExts = [
   'tsx',
   'cjs',
   'mjs',
+  'mp4',
 ];
 
 config.resolver.assetExts = [
@@ -18,6 +19,7 @@ config.resolver.assetExts = [
   'png',
   'jpg',
   'ttf',
+  'mp4',
 ];
 
 module.exports = config;

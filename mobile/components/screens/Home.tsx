@@ -8,18 +8,11 @@ type Props = {
 export default function Home({ onStart }: Props) {
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>2100</Text>
 
-            {/* <Image
-                source={require("../../assets/icons/2100.png")}
-                style={styles.icon}
-            /> */}
-
-            {/* <Image
-                source={require("../../assets/img/hero.png")}
+            <Image
+                source={require("../../assets/icons/logo.png")}
                 style={styles.image}
-            /> */}
-        
+            />
         
             <TouchableOpacity style={styles.button} onPress={onStart}>
                 <Text style={styles.buttonText}>Letsgo</Text>
@@ -54,10 +47,9 @@ const styles = StyleSheet.create({
         color: '#000',
     },
     image: {
-        width: '200%',
+        width: '100%',
         resizeMode: 'contain',
-        position: 'absolute',
-        top: -100,
-        left: -120,
+        position: 'relative',
+        
     },
 });
